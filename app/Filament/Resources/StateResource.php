@@ -4,11 +4,14 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\StateResource\Pages;
 use App\Filament\Resources\StateResource\RelationManagers;
+use App\Models\Country;
 use App\Models\State;
 use Filament\Forms;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -24,17 +27,22 @@ class StateResource extends Resource
     protected static ?int $navigationSort = 2;
 
 
-
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('country_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
+                Section::make()->schema([
+                    Forms\Components\Select::make('country_id')
+                        ->label('Country')
+                        ->searchable()
+                        ->preload()
+                        ->relationship(name: 'country', titleAttribute: 'name')
+                        ->native(false)
+                        ->required(),
+                    Forms\Components\TextInput::make('name')
+                        ->required()
+                        ->maxLength(255),
+                ])->columns(2),
             ]);
     }
 
@@ -42,8 +50,7 @@ class StateResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('country_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('country.name')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
@@ -57,7 +64,8 @@ class StateResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('Filter By Country')
+                    ->relationship(name: 'country', titleAttribute: 'name'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
